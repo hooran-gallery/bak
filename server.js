@@ -5,30 +5,34 @@ const app = express();
 
 app.use(express.json());
 
-app.use((req,res,next)=>{
-    res.header("Access-Control-Allow-Origin","*");
-    res.header("Access-Control-Allow-Headers","*");
+// CORS
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
     next();
 });
 
-app.post("/register",(req,res)=>{
+// ثبت نام
+app.post("/register", (req, res) => {
 
-    const {username,password} = req.body;
+    const { username, password } = req.body;
 
-    const users =
-        JSON.parse(
-            fs.readFileSync("users.json")
+    let users = [];
+
+    if (fs.existsSync("users.json")) {
+        users = JSON.parse(
+            fs.readFileSync("users.json", "utf8")
         );
+    }
 
-    const exist =
-        users.find(
-            u => u.username === username
-        );
+    const exist = users.find(
+        user => user.username === username
+    );
 
-    if(exist){
+    if (exist) {
         return res.json({
-            success:false,
-            message:"کاربر وجود دارد"
+            success: false,
+            message: "این نام کاربری قبلاً ثبت شده است"
         });
     }
 
@@ -39,15 +43,16 @@ app.post("/register",(req,res)=>{
 
     fs.writeFileSync(
         "users.json",
-        JSON.stringify(users,null,2)
+        JSON.stringify(users, null, 2)
     );
 
     res.json({
-        success:true
+        success: true,
+        message: "ثبت نام موفق"
     });
 
 });
 
-app.listen(3000,()=>{
+app.listen(3000, () => {
     console.log("Server Started");
 });
