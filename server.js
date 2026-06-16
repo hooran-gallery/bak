@@ -1,29 +1,53 @@
 const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
+const fs = require("fs");
 
 const app = express();
 
-const server = http.createServer(app);
+app.use(express.json());
 
-const io = new Server(server,{
-    cors:{
-        origin:"*"
-    }
+app.use((req,res,next)=>{
+    res.header("Access-Control-Allow-Origin","*");
+    res.header("Access-Control-Allow-Headers","*");
+    next();
 });
 
-io.on("connection",(socket)=>{
+app.post("/register",(req,res)=>{
 
-    console.log("کاربر وصل شد");
+    const {username,password} = req.body;
 
-    socket.on("chat-message",(msg)=>{
+    const users =
+        JSON.parse(
+            fs.readFileSync("users.json")
+        );
 
-        io.emit("chat-message",msg);
+    const exist =
+        users.find(
+            u => u.username === username
+        );
 
+    if(exist){
+        return res.json({
+            success:false,
+            message:"کاربر وجود دارد"
+        });
+    }
+
+    users.push({
+        username,
+        password
+    });
+
+    fs.writeFileSync(
+        "users.json",
+        JSON.stringify(users,null,2)
+    );
+
+    res.json({
+        success:true
     });
 
 });
 
-server.listen(3000,()=>{
+app.listen(3000,()=>{
     console.log("Server Started");
 });
