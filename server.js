@@ -5,11 +5,21 @@ const app = express();
 
 app.use(express.json());
 
-// CORS
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods", "GET,POST");
     next();
+});
+
+// تست سرور
+app.get("/", (req, res) => {
+    res.send("Server Online");
+});
+
+// تست ثبت نام
+app.get("/register", (req, res) => {
+    res.send("Register Route Works");
 });
 
 // ثبت نام
@@ -53,6 +63,6 @@ app.post("/register", (req, res) => {
 
 });
 
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log("Server Started");
 });
