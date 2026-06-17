@@ -1,5 +1,6 @@
 const express = require("express");
 const http = require("http");
+const fs = require("fs");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -12,19 +13,65 @@ const io = new Server(server,{
     }
 });
 
+// اگر فایل پیام‌ها وجود نداشت بساز
+if(!fs.existsSync("messages.json")){
+    fs.writeFileSync(
+        "messages.json",
+        "[]"
+    );
+}
+
 app.get("/",(req,res)=>{
     res.send("MiniChat Online");
+});
+
+// دریافت پیام‌های قبلی
+app.get("/messages",(req,res)=>{
+
+    const messages =
+        JSON.parse(
+            fs.readFileSync(
+                "messages.json",
+                "utf8"
+            )
+        );
+
+    res.json(messages);
 });
 
 io.on("connection",(socket)=>{
 
     console.log("User Connected");
 
-    socket.on("send-message",(data)=>{
+    socket.on(
+        "send-message",
+        (data)=>{
 
-        io.emit("new-message",data);
+            let messages =
+                JSON.parse(
+                    fs.readFileSync(
+                        "messages.json",
+                        "utf8"
+                    )
+                );
 
-    });
+            messages.push(data);
+
+            fs.writeFileSync(
+                "messages.json",
+                JSON.stringify(
+                    messages,
+                    null,
+                    2
+                )
+            );
+
+            io.emit(
+                "new-message",
+                data
+            );
+        }
+    );
 
     socket.on("disconnect",()=>{
         console.log("User Left");
@@ -32,6 +79,9 @@ io.on("connection",(socket)=>{
 
 });
 
-server.listen(process.env.PORT || 3000,()=>{
-    console.log("Server Started");
-});
+server.listen(
+    process.env.PORT || 3000,
+    ()=>{
+        console.log("Server Started");
+    }
+);
